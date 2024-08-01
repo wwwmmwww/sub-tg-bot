@@ -1,6 +1,6 @@
 import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, CallbackQueryHandler, Updater
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -115,9 +115,16 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         current_page = (list(subscriptions.keys()).index(data)) // PAGE_SIZE
         await query.edit_message_reply_markup(reply_markup=generate_pagination_buttons(current_page))
 
+# 启动机器人时发送消息给超级管理员
+async def start_bot(app):
+    async with app:
+        await app.bot.send_message(chat_id=superadmin, text="我已经启动了")
+
 # 主函数
 if __name__ == '__main__':
-    app = ApplicationBuilder().token("YOUR_BOT_TOKEN").build()
+    # 直接在代码中包含 Telegram 机器人令牌
+    token = "YOUR_BOT_TOKEN"
+    app = ApplicationBuilder().token(token).build()
 
     app.add_handler(CommandHandler("ad", add_subscription))
     app.add_handler(CommandHandler("del", delete_subscription))
@@ -125,5 +132,9 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler("admin", add_admin))
     app.add_handler(CommandHandler("convert", convert_subscriptions))
     app.add_handler(CallbackQueryHandler(button))
+
+    # 启动时发送消息给超级管理员
+    import asyncio
+    asyncio.run(start_bot(app))
 
     app.run_polling()
